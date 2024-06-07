@@ -4,27 +4,36 @@ import time
 from time import sleep
 import sys
 from dta import *
-import mysql.connector
 import sys
 import socket
 import subprocess
 import webbrowser
+import requests
+import base64
 from time import sleep
 os.system(clear)
-hst = str('srv1111.hstgr.io')
-usr = str('u815229119_scriptbox95')
-pd = str('h;6ax2IjM')
-ds= str('u815229119_scriptbox95')
-db_config = {
-    'user': usr,
-    'password': pd,
-    'host': hst,
-    'database': ds
-}
 con= f'{bblue}$ {bblue}Scriptbox{blue}95{purple}@{bgreen}'+f'[{bcyan}'+version+f'{bgreen}]{purple}~{white} '
-def create_db_connection():
-    connection = mysql.connector.connect(**db_config)
-    return connection
+url = "https://exowiki.space/project/v1/"
+token = "sY28Ai8ZKQgOmzsyPyAETJuQatAg7ksbY3mV4gmeTdRYZCe94ratcwIFblCVHYSd6Q5u6k8ECtwUY1gSpvcaSGb3fhBAKscA3jKQkqOS04St7o3hybJ8g958Q0SWmEhk1bbkOyW57VLANahfeVyr8Nb2dcvdhsvoCZuO0wtq7LYD4bceaJCkli8sQWH2ezsRWNLIrSQ1Ax5iLDGkVM5tU9oPxil626raLkN32YtZxKqZVfUoEbdHcEaR39zpbw5EfzUJ90HZStUJfWKgkK8JJ1ONkcW0pQ7yH4gUrsWkLowR"
+
+def api(id, file_name, Script_Code, id1):
+    headers = {
+    "User-Agent": "project/884938t48y584y5",
+    "Authorization": f"Bearer {token}",
+    "File-Name": file_name,
+    "id" : id1,
+    "Script-Code":Script_Code,}
+    params = {"id": id}
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
+      print(con+"Server Cunnection Success!")
+      data = response.json()[0]
+      return 1, data
+    else:
+      print(con+"Error:", response.status_code)
+      return 0, response.text
+
+
 
 def cnt_chk():
     try:
@@ -67,14 +76,17 @@ def chk_f(file_name, folder_name):
         return "No"
 
 def imp(id):
-     if cnt_chk():
-         connection = create_db_connection()
-         print(con_pls+'ID = '+str(id))
-         script, name, verz = get_script_by_id(connection, id)
-         if script:
-             file_name = str(name)+'.py'
+  if cnt_chk():
+    print(con_pls+'ID = '+str(id))
+    sdi, responce = api('4','','',str(id))
+    if responce == [] :
+             return 'non',"0"
+    else:
+         name = responce[0]['name']
+         script = responce[0]['script']
+         if script and sdi == 1:
+             file_name = str(id)+'.py'
              print(con+'Tool name is '+name)
-             print(con+'Tool version is '+verz)
              file_exist = chk_f(file_name, 'tools')
              if file_exist == 'No':
                  save_script_to_file(file_name, script)
@@ -85,7 +97,7 @@ def imp(id):
              return file_name, "1"
          else:
              return 'non',"0"
-     else:
+  else:
          print(con+"No internet connection, exiting...")
          sys.exit(0)
 
@@ -117,20 +129,16 @@ def upload():
         file_name, file_extension = os.path.splitext(file_name_with_extension)
         with open(file_path, 'r') as file:
             script_code = file.read()
+        code = base64.urlsafe_b64encode(script_code.encode())
         print(con_pls+"File is: "+file_name)
         opt = input(con+"You want to cantinue 'y' for yes : ")
         if opt== "y":
-            connection = mysql.connector.connect(**db_config)
-            with connection.cursor() as cursor:
-                sql = 'INSERT INTO main (name, script, ver) VALUES (%s, %s, %s) RETURNING id;'
-                cursor.execute(sql, (file_name, script_code, '000'))
-                result = cursor.fetchall()
-                od = str(result[0][0])
-                print("\n\n")
-                print(con+con_pls+"Your script Id is :"+od)
-                print("\n\n")
-            connection.commit()
-            print(con+"upload done...")
+            sts,responce = api('2',file_name,code,'non')
+            if sts == 1:
+                print(con+con_pls+"Your script Id is :"+str(responce))
+                print(con+"upload done...")
+            elif sts == 0:
+                print(con+con_pls+"Server Error"+str(responce))
         else:
             return
     except Exception as e:
@@ -157,48 +165,28 @@ def run_py(py_name, folder_name):
 
 
 def search_name_in_db(name):
+    print(con+'searching..')
     try:
-        cnx = mysql.connector.connect(**db_config)
-        cursor = cnx.cursor()
-
-        query = f"SELECT id, `name` FROM main WHERE name LIKE '%{name}%'"
-        cursor.execute(query)
-
-        result = cursor.fetchall()
-        if not result:
-            print(con+"No results")
-        else :
-            prt_dta(result)
- 
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-
-    finally:
-        cursor.close()
-        cnx.close()
+       sts,responce = api('3',name,'','')
+       if sts == 1:
+           if responce:
+                print(con+"Result Found..")
+                prt_dta(responce)
+           elif responce == []:
+               print(con+"No Result Found..")
+    except:
+        print(con+"Server Error")
 
 
 def fch_dta():
-    try:
-        cnx = mysql.connector.connect(**db_config)
-        cursor = cnx.cursor()
-        query = ("SELECT id, `name` FROM main LIMIT 50")
-        cursor.execute(query)
-
-        return cursor.fetchall()
-
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-    
-    finally:
-        cursor.close()
-        cnx.close()
-
-
+    sts,responce = api('1','','','')
+    if sts == 1:
+        return responce
+    elif sts == 0:
+        print(con+"Server Error - "+responce)
 def prt_dta(records):
     for row in records:
-        id, name = row
-        print(f"ID: {id}, Name: {name}")
+        print(f"ID: {row['id']}, Name: {row['name']}")
 
 def prt_m_dta():
  if __name__ == "__main__":
@@ -268,7 +256,7 @@ def main():
             sys.exit()
 
 def load():
-    os.system(clear)
+    '''os.system(clear)
     print(con_inf+"Loading [1%]")
     time.sleep(2)
     os.system(clear)
@@ -294,7 +282,7 @@ def load():
     time.sleep(0.5)
     os.system(clear)
     print(con_inf+"Loading [100%]")
-    time.sleep(2)
+    time.sleep(2)'''
     os.system(clear)
     print(con+"Chacking internet cunnection...")
     if cnt_chk():

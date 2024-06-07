@@ -17,7 +17,7 @@ cyan="\033[0;36m"
 bcyan="\033[1;36m"
 white="\033[1;37;40m"
 nc="\033[00m"
-version = str("15")
+version = str("17")
 getdata = 0
 import os
 clear = ('cls' if os.name == 'nt' else 'clear')

@@ -284,9 +284,9 @@ def load():
     print(con_inf+"Loading [100%]")
     time.sleep(2)'''
     os.system(clear)
-    print(con+"Chacking internet cunnection...")
+    print(con+"Chacking internet connection...")
     if cnt_chk():
-       print(con+"Internet is cunnected...")
+       print(con+"Internet is connected...")
        global records 
        records = fch_dta()
        time.sleep(2)
